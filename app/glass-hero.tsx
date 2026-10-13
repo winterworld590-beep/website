@@ -21,9 +21,6 @@ export default function GlassHero() {
   // `size` is the ring's half-extent as a % of half the screen height. On tall
   // screens, cap it so the ring stays within ~84% of the width.
   const size = Math.min(55, (84 * w) / h);
-  const ringOffsetY = 15;
-  // Center the text on the ring's lower edge so the glass refracts its top half.
-  const textOffsetY = ringOffsetY - size;
   const fontSize = Math.round(Math.min(120, w / 7.5));
   const fontFamily =
     typeof document === "undefined"
@@ -36,12 +33,10 @@ export default function GlassHero() {
       shape="Torus"
       size={size}
       backgroundGradient={PURPLE_GRADIENT}
-      orient={{ offsetY: ringOffsetY }}
       backdrop={{
         type: "Text",
         text: "GLASS ICON",
         textColor: "#FFFFFF",
-        textOffsetY,
         font: { fontFamily, fontSize, fontWeight: 600, letterSpacing: fontSize * 0.04 },
       }}
     />
