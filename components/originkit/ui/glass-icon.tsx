@@ -189,7 +189,7 @@ function buildEnvCanvas(): HTMLCanvasElement | null {
         ctx.shadowColor = "#ffffff"
         ctx.shadowBlur = 80
         ctx.beginPath()
-        const rr = (ctx as any).roundRect
+        const rr = (ctx as Partial<Pick<CanvasRenderingContext2D, "roundRect">>).roundRect
         if (typeof rr === "function") rr.call(ctx, x, y, w, h, 60)
         else ctx.rect(x, y, w, h)
         ctx.fill()
@@ -603,7 +603,9 @@ export default function LiquidGlassCluster({
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
     const live = useRef({ background, shape, logo, depth, size, speed, direction, bd, gl3, or })
-    live.current = { background, shape, logo, depth, size, speed, direction, bd, gl3, or }
+    useEffect(() => {
+        live.current = { background, shape, logo, depth, size, speed, direction, bd, gl3, or }
+    })
 
     const rebuildSDF = useRef(true)
     const rebuildPlate = useRef(true)
