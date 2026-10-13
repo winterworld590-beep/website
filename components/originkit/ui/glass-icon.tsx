@@ -20,6 +20,7 @@ export type BackdropGroup = {
     text?: string
     font?: FontValue
     textColor?: string
+    textOffsetY?: number
 }
 
 export type GlassGroup = {
@@ -44,6 +45,7 @@ export type LiquidGlassClusterProps = {
     style?: CSSProperties
 
     background?: string
+    backgroundGradient?: string[]
     shape?: "X" | "Torus" | "Sphere" | "Logo"
 
     logo?: string
@@ -560,6 +562,7 @@ const DEFAULT_BACKDROP: Required<BackdropGroup> = {
     text: "LIQUID\nGLASS",
     font: DEFAULT_FONT,
     textColor: "#FFFFFF",
+    textOffsetY: 0,
 }
 
 const DEFAULT_GLASS: Required<GlassGroup> = {
@@ -580,6 +583,7 @@ export default function LiquidGlassCluster({
     className,
     style,
     background = "#000000",
+    backgroundGradient,
     shape = "Torus",
     logo = DUMMY_LOGO,
     depth = 32,
@@ -602,9 +606,9 @@ export default function LiquidGlassCluster({
     const hostRef = useRef<HTMLDivElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
-    const live = useRef({ background, shape, logo, depth, size, speed, direction, bd, gl3, or })
+    const live = useRef({ background, backgroundGradient, shape, logo, depth, size, speed, direction, bd, gl3, or })
     useEffect(() => {
-        live.current = { background, shape, logo, depth, size, speed, direction, bd, gl3, or }
+        live.current = { background, backgroundGradient, shape, logo, depth, size, speed, direction, bd, gl3, or }
     })
 
     const rebuildSDF = useRef(true)
@@ -616,6 +620,8 @@ export default function LiquidGlassCluster({
     const plateVideo = srcOf(bd.video)
     const plateText = bd.text
     const plateTextColor = bd.textColor
+    const plateTextOffsetY = bd.textOffsetY
+    const gradientKey = backgroundGradient?.join("|") ?? ""
 
     const plateFontKey = [
         bd.font.fontFamily,
@@ -633,7 +639,7 @@ export default function LiquidGlassCluster({
     useEffect(() => {
         rebuildPlate.current = true
 
-    }, [plateType, plateImage, plateVideo, plateText, plateTextColor, plateFontKey, background])
+    }, [plateType, plateImage, plateVideo, plateText, plateTextColor, plateTextOffsetY, plateFontKey, background, gradientKey])
 
     useEffect(() => {
         const canvasEl = canvasRef.current
@@ -821,7 +827,14 @@ export default function LiquidGlassCluster({
 
             ctx2d.clearRect(0, 0, w, h)
 
-            ctx2d.fillStyle = p.background
+            const stops = p.backgroundGradient
+            if (stops && stops.length > 1) {
+                const grd = ctx2d.createLinearGradient(0, 0, w, h)
+                stops.forEach((c, i) => grd.addColorStop(i / (stops.length - 1), c))
+                ctx2d.fillStyle = grd
+            } else {
+                ctx2d.fillStyle = p.background
+            }
             ctx2d.fillRect(0, 0, w, h)
             ctx2d.font = `${fstyle} ${weight} ${fontPx}px ${family}`
             ctx2d.textAlign = "center"
@@ -832,7 +845,8 @@ export default function LiquidGlassCluster({
             if ("letterSpacing" in anyCtx) anyCtx.letterSpacing = `${tracking}px`
 
             const lines = String(p.bd.text ?? "").split("\n")
-            const top = h / 2 - ((lines.length - 1) * lineH) / 2
+            const centerY = h / 2 - (numOf(p.bd.textOffsetY, 0) / 100) * (h / 2)
+            const top = centerY - ((lines.length - 1) * lineH) / 2
             for (let i = 0; i < lines.length; i++) {
                 ctx2d.fillText(lines[i], w / 2, top + i * lineH)
             }
@@ -1148,7 +1162,10 @@ export default function LiquidGlassCluster({
                 width: "100%",
                 height: "100%",
                 overflow: "hidden",
-                background,
+                background:
+                    backgroundGradient && backgroundGradient.length > 1
+                        ? `linear-gradient(to bottom right, ${backgroundGradient.join(", ")})`
+                        : background,
                 touchAction: "none",
                 ...style,
             }}
